@@ -15,30 +15,50 @@ saved = joblib.load("kmeans_model.joblib")
 model = saved["model"]          # trained K-Means
 scaler = saved["scaler"]        # StandardScaler used during training
 FEATURES = saved["features"]    # ['energy_consumption', 'temperature']
+
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 data_path = os.path.join(BASE_DIR, "data", "energy_clustered.csv")
 
-data = pd.read_csv("energy_data.csv")
+data = pd.read_csv(data_path)
+
+# Generate cluster labels using the trained model
+data["cluster"] = model.predict(
+    scaler.transform(data[FEATURES])
+)
 
 # ---------- Step 2: Give every cluster an easy name ----------
-# Centres are in scaled units, so convert back to real kWh and °C
-centres = pd.DataFrame(scaler.inverse_transform(model.cluster_centers_), columns=FEATURES)
+
+centres = pd.DataFrame(
+    scaler.inverse_transform(model.cluster_centers_),
+    columns=FEATURES
+)
+
 avg_energy = data["energy_consumption"].mean()
 avg_temp = data["temperature"].mean()
 
-COLORS = ["#00B894", "#0984E3", "#FDCB6E", "#E17055", "#6C5CE7", "#FD79A8"]
+COLORS = ["#00B894", "#0984E3", "#FDCB6E",
+          "#E17055", "#6C5CE7", "#FD79A8"]
+
 names, advice = {}, {}
+
 for i, row in centres.iterrows():
+
     energy_level = "High" if row["energy_consumption"] > avg_energy else "Low"
     weather = "Hot" if row["temperature"] > avg_temp else "Cool"
+
     names[i] = f"{energy_level} usage · {weather} weather"
-    advice[i] = ("Heavy load: shift usage away from peak hours and use efficient equipment."
-                 if energy_level == "High"
-                 else "Light load: good example of efficient energy usage.")
+
+    advice[i] = (
+        "Heavy load: shift usage away from peak hours and use efficient equipment."
+        if energy_level == "High"
+        else "Light load: good example of efficient energy usage."
+    )
+
 data["segment"] = data["cluster"].map(names)
+
 
 # ---------- Page style ----------
 st.markdown("""
