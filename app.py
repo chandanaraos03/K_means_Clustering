@@ -15,7 +15,7 @@ saved = joblib.load("kmeans_model.joblib")
 model = saved["model"]          # trained K-Means
 scaler = saved["scaler"]        # StandardScaler used during training
 FEATURES = saved["features"]    # ['energy_consumption', 'temperature']
-data = pd.read_csv("data/energy_clustered.csv")
+data = pd.read_csv("energy_data.csv")
 
 # ---------- Step 2: Give every cluster an easy name ----------
 # Centres are in scaled units, so convert back to real kWh and °C
